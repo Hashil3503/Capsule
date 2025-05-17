@@ -1,0 +1,17 @@
+<resources>
+
+    <string name="app_name">Capsule</string>
+    <string name="title_med_info">약 정보</string>
+    <string name="placeholder_med_info">약 이름\n복용 시간\n복용 방법</string>
+
+    <string name="btn_prescription_ocr">처방전 인식</string>
+    <string name="btn_prescription_view">처방전 조회</string>
+    <string name="btn_graph">혈당/혈압 그래프</string>
+    <string name="btn_all_alarm_list">모든 알람 목록</string>
+
+    <string name="desc_pill_icon">약 아이콘</string>
+    <string name="desc_prescription_icon">처방전 아이콘</string>
+    <string name="desc_view_icon">처방전 보기 아이콘</string>
+    <string name="desc_graph_icon">그래프 아이콘</string>
+    <string name="desc_alarm_icon">알람 아이콘</string>
+</resources>

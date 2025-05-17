@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+    <!-- 카메라 없는 기기는 호환 안되게 설정 (앱 설치 자체를 막음) -->
+    <uses-feature android:name="android.hardware.camera" /> <!-- 카메라와 갤러리 접근을 위한 권한 설정 -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission
+        android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission
+        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" /> <!-- 알람을 위한 권한 설정. 다른 앱 위에 표시, 잠금 화면 위에 알람 표시 등을 포함한 기타 권한들 -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <uses-permission android:name="android.permission.INTERNET" />
+
+
+    <application
+        android:allowBackup="true"
+        android:usesCleartextTraffic="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.MyApplication"
+        tools:targetApi="31">
+        <activity
+            android:name=".GraphActivity"
+            android:exported="false" />
+
+        <service
+            android:name=".AlarmForegroundService"
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
+
+        <activity
+            android:name=".AllAlarmListActivity"
+            android:exported="false" />
+        <activity
+            android:name=".AddAlarmActivity"
+            android:exported="false" />
+        <activity
+            android:name=".AlarmStopActivity"
+            android:exported="false"
+            android:launchMode="singleTop"
+            android:showWhenLocked="true"
+            android:turnScreenOn="true" />
+        <activity
+            android:name=".AlarmListActivity"
+            android:exported="false" />
+        <activity
+            android:name=".BloodViewActivity"
+            android:exported="false" />
+        <activity
+            android:name=".BloodMenuActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ViewDetailActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ViewPrescriptionActivity"
+            android:exported="false" />
+        <activity
+            android:name=".AddPrescriptionActivity"
+            android:exported="false" />
+        <activity
+            android:name=".MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".ChatBotActivity"
+            android:windowSoftInputMode="adjustResize"
+            android:exported="false">
+        </activity>
+        <activity android:name=".OCRActivity" />
+        <activity android:name=".ResultActivity" />
+
+        <receiver
+            android:name=".AlarmReceiver"
+            android:enabled="true"
+            android:exported="false" />
+    </application>
+
+</manifest>

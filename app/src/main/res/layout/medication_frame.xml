@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/cardBackground"
+    android:padding="16dp"
+    android:layout_marginBottom="16dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/medicationName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="의약품 이름"
+            android:textColor="@color/text_highlight" />
+
+        <AutoCompleteTextView
+            android:id="@+id/editmedicationName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="의약품 이름을 입력하세요"
+            android:completionThreshold="1"
+            android:inputType="text"
+            android:textColor="@color/textPrimary"
+            android:textColorHint="@color/textSecondary" />
+
+        <TextView
+            android:id="@+id/medicationDosage"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="투약량"
+            android:textColor="@color/text_highlight" />
+
+        <EditText
+            android:id="@+id/editmedicationDosage"
+            android:inputType="numberDecimal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="투약량을 입력하세요"
+            android:textColor="@color/textPrimary"
+            android:textColorHint="@color/textSecondary" />
+
+        <TextView
+            android:id="@+id/medicationFrequency"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="복용 횟수"
+            android:textColor="@color/text_highlight" />
+
+        <EditText
+            android:id="@+id/editmedicationFrequency"
+            android:inputType="numberDecimal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="일일 복용 횟수를 입력하세요"
+            android:textColor="@color/textPrimary"
+            android:textColorHint="@color/textSecondary" />
+
+        <!-- 성분 -->
+        <TextView
+            android:id="@+id/medicationIngredients"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="성분"
+            android:textColor="@color/text_highlight"
+            android:paddingBottom="5dp" />
+
+        <TextView
+            android:id="@+id/viewmedicationIngredients"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="@color/textPrimary"
+            android:paddingBottom="5dp" />
+
+        <!-- 제형 -->
+        <TextView
+            android:id="@+id/medicationAppearance"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="제형"
+            android:textColor="@color/text_highlight"
+            android:paddingBottom="5dp" />
+
+        <TextView
+            android:id="@+id/viewmedicationAppearance"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="@color/textPrimary"
+            android:paddingBottom="5dp" />
+
+        <!-- 효과 -->
+        <TextView
+            android:id="@+id/medicationEffects"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="효과"
+            android:textColor="@color/text_highlight"
+            android:paddingBottom="5dp" />
+
+        <TextView
+            android:id="@+id/viewmedicationEffects"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="@color/textPrimary"
+            android:paddingBottom="5dp" />
+
+        <!-- 주의사항 -->
+        <TextView
+            android:id="@+id/medicationCaution"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="주의사항"
+            android:textColor="@color/text_highlight"
+            android:paddingBottom="5dp" />
+
+        <TextView
+            android:id="@+id/viewmedicationCaution"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="@color/textPrimary"
+            android:paddingBottom="5dp" />
+
+    </LinearLayout>
+</FrameLayout>

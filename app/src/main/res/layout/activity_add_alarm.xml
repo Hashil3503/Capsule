@@ -1,0 +1,99 @@
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp">
+
+        <!-- 화면 제목 -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="알람 설정"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:textColor="@color/textPrimary"
+            android:gravity="center"
+            android:layout_marginBottom="24dp" />
+
+        <!-- 날짜 버튼들 -->
+        <Button
+            android:id="@+id/btnStartDate"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:text="시작 날짜 선택"
+            android:textSize="14sp"
+            android:textColor="@color/textPrimary"
+            android:background="@drawable/rounded_button"
+            android:layout_marginBottom="12dp" />
+
+        <Button
+            android:id="@+id/btnEndDate"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:text="종료 날짜 선택"
+            android:textSize="14sp"
+            android:textColor="@color/textPrimary"
+            android:background="@drawable/rounded_button"
+            android:layout_marginBottom="12dp" />
+
+        <Button
+            android:id="@+id/btnTime"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:text="알람 시간 선택"
+            android:textSize="14sp"
+            android:textColor="@color/textPrimary"
+            android:background="@drawable/rounded_button"
+            android:layout_marginBottom="12dp" />
+
+        <!-- 알람 시간 목록 -->
+        <TextView
+            android:id="@+id/tvAlarmTimes"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="추가된 알람 시간:"
+            android:textSize="16sp"
+            android:textColor="@color/textPrimary"
+            android:background="@color/background"
+            android:padding="12dp"
+            android:layout_marginTop="12dp"
+            android:layout_marginBottom="24dp"
+            android:elevation="2dp" />
+
+        <!-- 알람 설정 버튼 -->
+        <Button
+            android:id="@+id/btnSetAlarm"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:text="알람 설정"
+            android:textSize="14sp"
+            android:textColor="@color/textPrimary"
+            android:background="@drawable/rounded_button"
+            android:layout_marginBottom="12dp" />
+
+        <!-- 목록 / 일괄 취소 버튼 -->
+        <Button
+            android:id="@+id/btnViewAlarms"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:text="처방전 알람 목록 보기"
+            android:textSize="14sp"
+            android:textColor="@color/textPrimary"
+            android:background="@drawable/rounded_button"
+            android:layout_marginBottom="12dp" />
+
+        <Button
+            android:id="@+id/btnCancelAlarms"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:text="처방전 알람 일괄 취소"
+            android:textSize="14sp"
+            android:textColor="@color/textPrimary"
+            android:background="@drawable/rounded_button" />
+    </LinearLayout>
+</ScrollView>

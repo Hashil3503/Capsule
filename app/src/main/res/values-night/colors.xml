@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="primary">#B99AF2</color>
+    <color name="background">#121212</color>
+    <color name="textPrimary">#FFFFFF</color>
+    <color name="textSecondary">#CCCCCC</color>
+    <color name="cardBackground">#1E1E1E</color> <!-- 다크모드용 어두운 회색 -->
+    <color name="newBackground">#1E1E1E</color> <!-- 메인화면 의약품 카드용 색 -->
+    <color name="sctroke">#FFFFFF</color> <!-- 메인화면 의약품 카드용 테두리 색 -->
+    <color name="bg_main">#121212</color>
+    <color name="text_main">#FFFFFF</color> <!-- 밝은 텍스트 -->
+    <color name="text_sub">#CCCCCC</color> <!-- 연한 회색 텍스트 (다크모드용) -->
+    <color name="text_highlight">#BB86FC</color>  <!-- 강조 표시용 텍스트 -->
+</resources>

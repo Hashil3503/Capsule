@@ -1,0 +1,17 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme. -->
+    <style name="Base.Theme.MyApplication" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- 💡 여기서 색상 리소스 연결 -->
+        <item name="colorPrimary">@color/primary</item>
+        <item name="colorOnPrimary">@color/textPrimary</item>
+
+        <item name="android:colorBackground">@color/background</item>
+        <item name="android:textColor">@color/textPrimary</item>
+
+        <item name="android:statusBarColor">@color/background</item>
+        <item name="android:navigationBarColor">@color/background</item>
+    </style>
+
+    <!-- 실제 사용하는 테마는 여기에 연결됨 -->
+    <style name="Theme.MyApplication" parent="Base.Theme.MyApplication" />
+</resources>
