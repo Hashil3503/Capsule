@@ -3,16 +3,10 @@ package com.example.myapplication;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Canvas;
-import android.graphics.ColorMatrix;
-import android.graphics.ColorMatrixColorFilter;
 import android.graphics.Matrix;
-import android.graphics.Paint;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.AsyncTask;
-import android.text.Editable;
-import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
@@ -43,11 +37,9 @@ import com.google.mlkit.vision.text.korean.KoreanTextRecognizerOptions;
 import com.google.android.gms.tasks.Tasks;
 import com.google.android.gms.tasks.Task;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -57,7 +49,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 public class ResultActivity extends AppCompatActivity {
     private static final String TAG = "ResultActivity";
@@ -67,7 +61,7 @@ public class ResultActivity extends AppCompatActivity {
     private ProgressBar progressBar;
     private Bitmap bitmap;
     private Map<String, String> structuredData;
-    private ArrayList<String> extractedMedicines = new ArrayList<>();
+    private Set<String> extractedMedicines = new HashSet<>();
     private Uri imageUri;
     private Set<String> medicineDatabase = new HashSet<>();
     private static final float SIMILARITY_THRESHOLD = 0.2f;
@@ -77,15 +71,15 @@ public class ResultActivity extends AppCompatActivity {
     private AlertDialog currentDialog;
     private TextView currentListView;
     private int currentPage = 0;
-    private List<String> recognizedMedicines;
-    private List<String> modifiedMedicines;
+    private Set<String> recognizedMedicines = new HashSet<>();
+    private Set<String> modifiedMedicines = new HashSet<>();
 
     private ArrayAdapter<String> adapter;
 
     private MedicineNameRepository medicineNameRepository;
 
-    private List<String> medicineNames = new ArrayList<>(); // 자동완성을 위한 리스트
-    private List<MedicineName> nameList = new ArrayList<>(); // 자동완성을 위한 리스트 2
+    private Set<String> medicineNames = new HashSet<>(); // 자동완성을 위한 Set
+    private List<MedicineName> nameList = new ArrayList<>(); // DB 조회 결과는 List 유지
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -98,7 +92,7 @@ public class ResultActivity extends AppCompatActivity {
         medicineNameRepository = new MedicineNameRepository(getApplication());
 
         new Thread(() -> {
-            nameList = medicineNameRepository.getAllMedicineNames(); //의약품 이름 목록을 조회해서 medicineNames 문자열 리스트에 추가.
+            nameList = medicineNameRepository.getAllMedicineNames();
 
             runOnUiThread(() -> {
                 for (MedicineName name : nameList) {
@@ -108,14 +102,14 @@ public class ResultActivity extends AppCompatActivity {
                 adapter = new ArrayAdapter<>(
                         ResultActivity.this,
                         android.R.layout.simple_dropdown_item_1line,
-                        medicineNames
+                        new ArrayList<>(medicineNames) // Set을 List로 변환하여 어댑터에 전달
                 );
             });
         }).start();
 
-        // OCR 결과와 수정된 약품명 리스트 초기화
-        recognizedMedicines = new ArrayList<>();
-        modifiedMedicines = new ArrayList<>();
+        // OCR 결과와 수정된 약품명 Set 초기화
+        recognizedMedicines = new HashSet<>();
+        modifiedMedicines = new HashSet<>();
 
         initializeViews();
         setupButtons();
@@ -209,9 +203,9 @@ public class ResultActivity extends AppCompatActivity {
     private void setupButtons() {
         btnConfirm.setOnClickListener(v -> {
             if (!extractedMedicines.isEmpty()) {
-                // AddPrescriptionActivity로 이동, 추출한 의약품 목록 전달.
+                // AddPrescriptionActivity로 이동, 추출한 의약품 목록 전달
                 Intent intent = new Intent(this, AddPrescriptionActivity.class);
-                intent.putStringArrayListExtra("medicine_names", extractedMedicines);
+                intent.putStringArrayListExtra("medicine_names", new ArrayList<>(extractedMedicines)); // Set을 List로 변환하여 전달
                 startActivity(intent);
             } else {
                 Toast.makeText(this, "인식된 약품이 없습니다.", Toast.LENGTH_SHORT).show();
@@ -352,11 +346,12 @@ public class ResultActivity extends AppCompatActivity {
                     BitmapFactory.decodeStream(inputStream, null, options);
                     inputStream.close();
 
-                    // 메모리 제한을 고려한 샘플링 크기 계산
-                    int maxSize = 2048;
+                    // OCR 처리를 위한 최적화된 크기로 조정 (800x800으로 제한)
+                    int maxSize = 800; // OCR 처리에 충분한 크기로 조정
                     options.inSampleSize = calculateInSampleSize(options, maxSize, maxSize);
                     options.inJustDecodeBounds = false;
-                    options.inPreferredConfig = Bitmap.Config.ARGB_8888;
+                    options.inPreferredConfig = Bitmap.Config.RGB_565; // 메모리 사용량 감소
+                    options.inDither = true;
 
                     // 이미지 다시 로드
                     inputStream = resolver.openInputStream(imageUri);
@@ -367,7 +362,8 @@ public class ResultActivity extends AppCompatActivity {
                         return null;
                     }
 
-                    Log.d(TAG, String.format("이미지 로드 완료: %dx%d", bitmap.getWidth(), bitmap.getHeight()));
+                    // 이미지 크기 로깅
+                    Log.d(TAG, String.format("최적화된 이미지 크기: %dx%d", bitmap.getWidth(), bitmap.getHeight()));
 
                     // EXIF 정보 읽기 및 회전 처리
                     try {
@@ -402,7 +398,6 @@ public class ResultActivity extends AppCompatActivity {
                                     bitmap.recycle();
                                     bitmap = rotatedBitmap;
                                 }
-                                Log.d(TAG, "이미지 회전 처리 완료");
                             }
                         }
                     } catch (IOException e) {
@@ -471,6 +466,8 @@ public class ResultActivity extends AppCompatActivity {
     }
 
     private class OCRTask extends AsyncTask<Void, Void, Text> {
+        private static final int MAX_IMAGE_SIZE = 1024;
+
         @Override
         protected void onPreExecute() {
             progressBar.setVisibility(View.VISIBLE);
@@ -481,42 +478,45 @@ public class ResultActivity extends AppCompatActivity {
         protected Text doInBackground(Void... voids) {
             try {
                 if (bitmap == null || bitmap.isRecycled()) {
-                    Log.e(TAG, "비트맵이 null이거나 recycled 상태입니다.");
                     return null;
                 }
 
-                // 이미지 전처리
-                Bitmap processedBitmap = preprocessImage(bitmap);
-                if (processedBitmap == null) {
-                    Log.e(TAG, "이미지 전처리 실패");
-                    return null;
-                }
-
-                // 한국어 OCR 옵션 사용
-                InputImage image = InputImage.fromBitmap(processedBitmap, 0);
-                TextRecognizer recognizer = TextRecognition.getClient(
-                        new KoreanTextRecognizerOptions.Builder().build());
-
-                // OCR 결과 대기
-                Task<Text> result = recognizer.process(image);
-                Text text = Tasks.await(result);
-
-                // OCR 결과 로깅
-                if (text != null) {
-                    Log.d(TAG, "OCR 인식 결과:");
-                    for (Text.TextBlock block : text.getTextBlocks()) {
-                        Log.d(TAG, "블록: " + block.getText());
+                // 1. 최적화된 이미지 크기 조정
+                Bitmap resizedBitmap = null;
+                try {
+                    int width = bitmap.getWidth();
+                    int height = bitmap.getHeight();
+                    
+                    // 이미지가 너무 크면 최적화된 크기로 조정
+                    if (width > MAX_IMAGE_SIZE || height > MAX_IMAGE_SIZE) {
+                        float scale = Math.min(
+                            (float) MAX_IMAGE_SIZE / width,
+                            (float) MAX_IMAGE_SIZE / height
+                        );
+                        int newWidth = Math.round(width * scale);
+                        int newHeight = Math.round(height * scale);
+                        
+                        // 품질과 속도의 균형을 맞춘 스케일링
+                        resizedBitmap = Bitmap.createScaledBitmap(bitmap, newWidth, newHeight, true);
+                    } else {
+                        resizedBitmap = bitmap;
                     }
-                } else {
-                    Log.e(TAG, "OCR 결과가 null입니다.");
-                }
 
-                // 메모리 정리
-                if (processedBitmap != bitmap && !processedBitmap.isRecycled()) {
-                    processedBitmap.recycle();
-                }
+                    // 2. OCR 처리 (한국어 설정)
+                    InputImage image = InputImage.fromBitmap(resizedBitmap, 0);
+                    TextRecognizer recognizer = TextRecognition.getClient(
+                            new KoreanTextRecognizerOptions.Builder().build());
 
-                return text;
+                    // 3. OCR 실행
+                    Task<Text> result = recognizer.process(image);
+                    return Tasks.await(result);
+
+                } finally {
+                    // 4. 메모리 정리
+                    if (resizedBitmap != null && resizedBitmap != bitmap) {
+                        resizedBitmap.recycle();
+                    }
+                }
             } catch (Exception e) {
                 Log.e(TAG, "OCR 처리 중 오류 발생", e);
                 return null;
@@ -525,66 +525,23 @@ public class ResultActivity extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(Text text) {
-            progressBar.setVisibility(View.GONE);
-
             if (text == null) {
-                Toast.makeText(ResultActivity.this, "텍스트 인식에 실패했습니다. 다시 시도해주세요.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(ResultActivity.this, "텍스트 인식에 실패했습니다.", Toast.LENGTH_SHORT).show();
                 finish();
                 return;
             }
 
-            // OCR 결과 처리
-            new TextProcessingTask().execute(text);
+            // 5. 텍스트 처리 시작
+            new OptimizedTextProcessingTask().execute(text);
         }
     }
 
-    private Bitmap preprocessImage(Bitmap original) {
-        try {
-            if (original == null) {
-                Log.e(TAG, "원본 이미지가 null입니다.");
-                return null;
-            }
-
-            // 간단한 전처리만 수행
-            Bitmap processedBitmap = Bitmap.createBitmap(original.getWidth(),
-                    original.getHeight(), Bitmap.Config.RGB_565);
-            Canvas canvas = new Canvas(processedBitmap);
-            Paint paint = new Paint();
-
-            // 명암 대비 조정
-            float contrast = 1.2f;
-            float brightness = -10f;
-            ColorMatrix colorMatrix = new ColorMatrix(new float[] {
-                    contrast, 0, 0, 0, brightness,
-                    0, contrast, 0, 0, brightness,
-                    0, 0, contrast, 0, brightness,
-                    0, 0, 0, 1, 0
-            });
-
-            paint.setColorFilter(new ColorMatrixColorFilter(colorMatrix));
-            canvas.drawBitmap(original, 0, 0, paint);
-
-            return processedBitmap;
-        } catch (Exception e) {
-            Log.e(TAG, "이미지 전처리 중 오류 발생", e);
-            return original;
-        }
-    }
-
-    private class TextProcessingTask extends AsyncTask<Text, Void, List<String>> {
-        private final Set<String> SECTION_KEYWORDS = new HashSet<>(Arrays.asList(
-                "약품명", "약명", "처방약", "조제약", "처방내역", "조제내역"
-        ));
-
-        private final Set<String> MEDICINE_FORM_KEYWORDS = new HashSet<>(Arrays.asList(
+    private class OptimizedTextProcessingTask extends AsyncTask<Text, Void, Set<String>> {
+        private final Set<String> MEDICINE_KEYWORDS = new HashSet<>(Arrays.asList(
                 "정", "캡슐", "시럽", "주사", "액", "연고", "크림", "패치",
                 "tab", "cap", "inj", "cream", "patch", "gel", "정제", "주사제",
                 "캡슐제", "시럽제", "연고제", "크림제", "패치제", "가루", "산", "환",
-                "물", "좌", "점안", "점이", "주", "알", "개", "통", "병"
-        ));
-
-        private final Set<String> UNIT_KEYWORDS = new HashSet<>(Arrays.asList(
-                "mg", "mcg", "g", "ml", "cc", "정", "캡슐", "알", "개", "통", "병"
+                "물", "좌", "점안", "점이", "주", "알", "개", "통", "병", "셀"
         ));
 
         @Override
@@ -594,71 +551,115 @@ public class ResultActivity extends AppCompatActivity {
         }
 
         @Override
-        protected List<String> doInBackground(Text... texts) {
+        protected Set<String> doInBackground(Text... texts) {
             Text text = texts[0];
-            List<String> recognizedMedicines = new ArrayList<>();
+            Set<String> recognizedMedicines = new HashSet<>();
+            if (text == null) return recognizedMedicines;
 
-            if (text == null) {
-                Log.e(TAG, "OCR 텍스트가 null입니다.");
-                return recognizedMedicines;
+            // 1. DB 데이터 미리 로드 및 캐싱
+            List<MedicineName> medicines = medicineNameRepository.getAllMedicineNames();
+            Map<String, String> medicineMap = new HashMap<>();
+            Map<String, String> normalizedMap = new HashMap<>();
+            
+            for (MedicineName med : medicines) {
+                String name = med.getName();
+                String normalized = CommonMethod.normalizeWord(name);
+                medicineMap.put(normalized, name);
+                normalizedMap.put(name, normalized);
             }
 
-            // 모든 텍스트 블록 처리
+            // 2. 텍스트 블록 병렬 처리
+            ExecutorService executor = Executors.newFixedThreadPool(4);
+            List<Future<Set<String>>> futures = new ArrayList<>();
+
             for (Text.TextBlock block : text.getTextBlocks()) {
-                String blockText = block.getText().trim();
-                Log.d(TAG, "처리 중인 블록: " + blockText);
+                futures.add(executor.submit(() -> processTextBlock(block, medicineMap, normalizedMap)));
+            }
 
-                // 각 줄에서 약품명 추출 시도
-                String[] lines = blockText.split("\n");
-                for (String line : lines) {
-                    line = line.trim();
-                    if (line.isEmpty()) continue;
-
-                    // 약품 형태 키워드가 있는 경우에만 처리
-                    for (String keyword : MEDICINE_FORM_KEYWORDS) {
-                        if (line.toLowerCase().contains(keyword.toLowerCase())) {
-                            // 약품명 추출 (형태 키워드 포함)
-//                            String medicineName = extractMedicineName(line);
-                            String medicineName = line;
-                            if (!medicineName.isEmpty()) {
-                                // 데이터베이스에서 매칭 검색
-                                String matchedName = findBestMatch(medicineName);
-                                if (matchedName != null && !recognizedMedicines.contains(matchedName)) {
-                                    recognizedMedicines.add(matchedName);
-                                    Log.d(TAG, "매칭된 약품명: " + matchedName);
-                                }
-                            }
-                            break; // 한 줄에서 하나의 약품명만 추출
-                        }
-                    }
+            // 3. 결과 수집
+            try {
+                for (Future<Set<String>> future : futures) {
+                    recognizedMedicines.addAll(future.get());
                 }
+            } catch (Exception e) {
+                Log.e(TAG, "텍스트 처리 중 오류 발생", e);
+            } finally {
+                executor.shutdown();
             }
 
             return recognizedMedicines;
         }
 
-        private String extractMedicineName(String line) { //필요 없는거 같아서 일단은 비활성화
-            // 숫자와 단위 제거 (형태 키워드는 유지)
-            String medicineName = line.replaceAll("\\d+\\s*(" + String.join("|", UNIT_KEYWORDS) + ")", "");
-            medicineName = medicineName.replaceAll("\\d+", "");
+        private Set<String> processTextBlock(Text.TextBlock block, 
+                                          Map<String, String> medicineMap,
+                                          Map<String, String> normalizedMap) {
+            Set<String> blockResults = new HashSet<>();
+            String blockText = block.getText().trim();
+            if (blockText.isEmpty()) return blockResults;
 
-            // 특수문자 제거 (형태 키워드는 유지)
-            medicineName = medicineName.replaceAll("[^가-힣a-zA-Z0-9\\s]", "");
+            // 4. 약품명이 포함된 라인 필터링
+            String[] lines = blockText.split("\n");
+            for (String line : lines) {
+                line = line.trim();
+                if (line.isEmpty()) continue;
 
-            // 공백 정리
-            medicineName = medicineName.trim();
+                // 5. 빠른 키워드 체크
+                if (containsMedicineKeyword(line)) {
+                    String normalized = CommonMethod.normalizeWord(line);
+                    Log.d(TAG, String.format("@@ OCR 추출 라인: %s/ 정규화: %s ",line, normalized));
 
-            // 너무 짧은 텍스트 제외
-            if (medicineName.length() < 2) {
-                return "";
+                    if (normalized != null && !normalized.isEmpty()) {
+                        // 6. 정확한 매칭 시도
+                        String matched = medicineMap.get(normalized);
+                        if (matched != null) {
+                            Log.d(TAG, String.format("@@ 정확 매칭: OCR='%s' 정규화='%s' 매칭='%s'", line, normalized, matched));
+                            blockResults.add(matched);
+                            continue;
+                        }
+
+                        // 7. 유사도 기반 매칭
+                        for (Map.Entry<String, String> entry : medicineMap.entrySet()) {
+                            String dbName = entry.getKey();
+                            if (Math.abs(normalized.length() - dbName.length()) <= 2) {
+                                float similarity = calculateSimilarity(normalized, dbName);
+                                if (similarity >= 0.7f) {
+                                    Log.d(TAG, String.format("@@ 유사 매칭: OCR='%s' 정규화='%s' 매칭='%s' | 유사도=%.2f", line, normalized, dbName, similarity));
+
+                                    blockResults.add(entry.getValue());
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
             }
-
-            Log.d(TAG, "추출된 약품명: " + medicineName);
-            return medicineName;
+            return blockResults;
         }
 
+        private boolean containsMedicineKeyword(String text) {
+            String lowerText = text.toLowerCase();
+            for (String keyword : MEDICINE_KEYWORDS) {
+                if (lowerText.contains(keyword.toLowerCase())) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private float calculateSimilarity(String s1, String s2) {
+            if (s1 == null || s2 == null) return 0;
+            if (s1.equals(s2)) return 1.0f;
+
+            int maxLength = Math.max(s1.length(), s2.length());
+            if (maxLength == 0) return 1.0f;
+
+            int distance = levenshteinDistance(s1, s2);
+            return 1.0f - (float) distance / maxLength;
+        }
+
+
         @Override
-        protected void onPostExecute(List<String> medicines) {
+        protected void onPostExecute(Set<String> medicines) {
             extractedMedicines.clear();
             extractedMedicines.addAll(medicines);
             displayResults();
@@ -670,101 +671,6 @@ public class ResultActivity extends AppCompatActivity {
     private void performOCR(Uri uri) {
         new LoadImageTask().execute(uri);
     }
-
-//    private String findBestMatch(String medicineName) {
-//        if (medicineName == null || medicineName.isEmpty()) {
-//            return null;
-//        }
-//
-//        try {
-//            String normalizedInput = normalizeString(medicineName);
-//            String bestMatch = null;
-//            float maxSimilarity = SIMILARITY_THRESHOLD;
-//            List<String> similarMedicines = new ArrayList<>();
-//
-//            // 데이터베이스에서 직접 검색
-//            List<String> matches = dbHelper.searchMedicines(normalizedInput);
-//            if (!matches.isEmpty()) {
-//                for (String dbMedicine : matches) {
-//                    String normalizedDb = normalizeString(dbMedicine);
-//                    float similarity = calculateSimilarity(normalizedInput, normalizedDb);
-//
-//                    if (similarity > maxSimilarity) {
-//                        maxSimilarity = similarity;
-//                        bestMatch = dbMedicine;
-//                        Log.d(TAG, String.format("매칭 발견: %s (유사도: %.2f)", dbMedicine, similarity));
-//                    }
-//
-//                    // 유사도가 0.1 이상인 모든 약품명 저장
-//                    if (similarity >= 0.1f) {
-//                        similarMedicines.add(dbMedicine);
-//                    }
-//                }
-//            }
-//
-//            // 최종 매칭이 없고 유사한 약품명이 있는 경우
-//            if (bestMatch == null && !similarMedicines.isEmpty()) {
-//                // 유사한 약품명 목록을 보여주는 다이얼로그 표시
-//                showSimilarMedicinesDialog(medicineName, similarMedicines);
-//            }
-//
-//            if (bestMatch != null) {
-//                Log.d(TAG, String.format("최종 매칭: %s (유사도: %.2f)", bestMatch, maxSimilarity));
-//            } else {
-//                Log.d(TAG, String.format("매칭 실패: %s (최대 유사도: %.2f)", medicineName, maxSimilarity));
-//            }
-//
-//            return bestMatch;
-//        } catch (Exception e) {
-//            Log.e(TAG, "약품명 매칭 중 오류 발생", e);
-//            return null;
-//        }
-//    }
-
-    private String findBestMatch(String medicineName) {
-        if (medicineName == null || medicineName.isEmpty()) {
-            return null;
-        }
-
-        try {
-            String normalizedInput = normalizeMedicineName(medicineName);
-            String bestMatch = null;
-            float maxSimilarity = SIMILARITY_THRESHOLD;
-            List<String> similarMedicines = new ArrayList<>();
-
-            // Room DB에서 약품 이름 전체 조회 (백그라운드 스레드에서 실행되므로 안전)
-            List<MedicineName> allMedicines = medicineNameRepository.getAllMedicineNames();
-
-            for (MedicineName med : allMedicines) {
-                String dbName = med.getName();
-                String normalizedDb = normalizeString(dbName);
-
-                float similarity = calculateSimilarity(normalizedInput, normalizedDb);
-
-                if (similarity > maxSimilarity && similarity >= 0.7f) { //유사도 0.7 이상인것만 화면에 표시하기
-                    maxSimilarity = similarity;
-                    bestMatch = dbName;
-                    Log.d(TAG, String.format("매칭 발견: %s (유사도: %.2f)", dbName, similarity));
-                }
-                // 유사도가 0.7 이상인 모든 약품명 저장 (유사한 이름 목록 보여줄 때 사용)
-                if (similarity >= 0.7f) {
-                    similarMedicines.add(dbName);
-                }
-            }
-
-            if (bestMatch == null && !similarMedicines.isEmpty()) {
-                showSimilarMedicinesDialog(medicineName, similarMedicines);
-            }
-
-            return (maxSimilarity >= 0.7f) ? bestMatch : null;
-
-        } catch (Exception e) {
-            Log.e(TAG, "약품명 매칭 중 오류 발생", e);
-            return null;
-        }
-    }
-
-
 
     private void showSimilarMedicinesDialog(String originalName, List<String> similarMedicines) {
         runOnUiThread(() -> {
@@ -808,16 +714,30 @@ public class ResultActivity extends AppCompatActivity {
     }
 
     private float calculateSimilarity(String s1, String s2) {
-        if (s1 == null || s2 == null) return 0;
-        if (s1.equals(s2)) return 1.0f;
+        if (s1 == null || s2 == null) {
+            Log.d(TAG, "🟠 calculateSimilarity: 입력 중 null 존재 -> s1=" + s1 + ", s2=" + s2);
+            return 0f;
+        }
+
+        if (s1.equals(s2)) {
+            Log.d(TAG, "🟢 calculateSimilarity: 완전일치 -> s1=" + s1 + ", s2=" + s2);
+            return 1.0f;
+        }
 
         int maxLength = Math.max(s1.length(), s2.length());
-        if (maxLength == 0) return 1.0f;
-
+        if (maxLength == 0) {
+            Log.d(TAG, "🟠 calculateSimilarity: 두 문자열 모두 빈 문자열");
+            return 1.0f;
+        }
         // Levenshtein 거리 계산
         int distance = levenshteinDistance(s1, s2);
-        return 1.0f - (float) distance / maxLength;
+        float similarity = 1.0f - (float) distance / maxLength;
+
+        Log.d(TAG, String.format("🔍 calculateSimilarity: \"%s\" ↔ \"%s\" | 거리: %d | 유사도: %.3f", s1, s2, distance, similarity));
+
+        return similarity;
     }
+
 
     private int levenshteinDistance(String s1, String s2) {
         int[][] dp = new int[s1.length() + 1][s2.length() + 1];
@@ -844,10 +764,10 @@ public class ResultActivity extends AppCompatActivity {
     }
 
     private String normalizeString(String text) {
-
         if (text == null) return "";
 
         // 1. 기본 정규화: 앞뒤 공백 제거
+        text = text.trim();
         text = text.trim();
 
         // 2. 괄호와 그 내용 제거
@@ -869,7 +789,6 @@ public class ResultActivity extends AppCompatActivity {
         text = text.replaceAll("_$", "").trim();
 
         return text;
-
     }
 
     private String normalizeMedicineName(String name) {
@@ -891,11 +810,8 @@ public class ResultActivity extends AppCompatActivity {
         return name;
     }
 
-
     private void displayResults() {
         LinearLayout resultLayout = findViewById(R.id.resultLayout);
-
-        // 기존 결과 화면이 있다면 모두 제거
         resultLayout.removeAllViews();
 
         // 메인 레이아웃 생성
@@ -910,57 +826,45 @@ public class ResultActivity extends AppCompatActivity {
         titleView.setPadding(0, 0, 0, 20);
         mainLayout.addView(titleView);
 
-        if (extractedMedicines.isEmpty()) {
-            TextView emptyView = new TextView(this);
-            emptyView.setText("데이터베이스와 일치하는 약품명을 찾을 수 없습니다.\n\n" +
-                    "처방전의 약품명이 잘 보이도록 다시 촬영해주세요.\n" +
-                    "또는 제품명 목록 보기를 통해 직접 찾아보세요.");
-            mainLayout.addView(emptyView);
-        } else {
-            // 약품명 개수 표시
-            TextView countView = new TextView(this);
-            countView.setText(String.format("총 %d개의 약품명이 인식되었습니다.", extractedMedicines.size()));
-            countView.setPadding(0, 0, 0, 20);
-            mainLayout.addView(countView);
+        // 약품명 목록을 정렬된 List로 변환하여 표시
+        List<String> sortedMedicines = new ArrayList<>(extractedMedicines);
+        Collections.sort(sortedMedicines);
 
-            // 각 약품명에 대한 수정/삭제 버튼 추가
-            for (int i = 0; i < extractedMedicines.size(); i++) {
-                final int index = i;
-                LinearLayout itemLayout = new LinearLayout(this);
-                itemLayout.setOrientation(LinearLayout.HORIZONTAL);
-                itemLayout.setLayoutParams(new LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.MATCH_PARENT,
-                        LinearLayout.LayoutParams.WRAP_CONTENT));
-                itemLayout.setPadding(0, 10, 0, 10);
+        for (String medicine : sortedMedicines) {
+            LinearLayout itemLayout = new LinearLayout(this);
+            itemLayout.setOrientation(LinearLayout.HORIZONTAL);
+            itemLayout.setLayoutParams(new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT));
+            itemLayout.setPadding(0, 10, 0, 10);
 
-                TextView medicineText = new TextView(this);
-                medicineText.setText(String.format("%d. %s", i + 1, extractedMedicines.get(i)));
-                medicineText.setLayoutParams(new LinearLayout.LayoutParams(
-                        0, LinearLayout.LayoutParams.WRAP_CONTENT, 1));
-                medicineText.setTextSize(16);
+            TextView medicineText = new TextView(this);
+            medicineText.setText(medicine);
+            medicineText.setLayoutParams(new LinearLayout.LayoutParams(
+                    0, LinearLayout.LayoutParams.WRAP_CONTENT, 1));
+            medicineText.setTextSize(16);
 
-                Button editButton = new Button(this);
-                editButton.setText("수정");
-                editButton.setOnClickListener(v -> showEditDialog(index));
+            Button editButton = new Button(this);
+            editButton.setText("수정");
+            editButton.setOnClickListener(v -> showEditDialog(medicine));
 
-                Button deleteButton = new Button(this);
-                deleteButton.setText("삭제");
-                deleteButton.setOnClickListener(v -> {
-                    extractedMedicines.remove(index);
-                    displayResults();
-                });
+            Button deleteButton = new Button(this);
+            deleteButton.setText("삭제");
+            deleteButton.setOnClickListener(v -> {
+                extractedMedicines.remove(medicine);
+                displayResults();
+            });
 
-                itemLayout.addView(medicineText);
-                itemLayout.addView(editButton);
-                itemLayout.addView(deleteButton);
-                mainLayout.addView(itemLayout);
-            }
+            itemLayout.addView(medicineText);
+            itemLayout.addView(editButton);
+            itemLayout.addView(deleteButton);
+            mainLayout.addView(itemLayout);
         }
 
         // 약품 추가 버튼
         Button addButton = new Button(this);
         addButton.setText("약품 추가");
-        addButton.setOnClickListener(v -> showAddDialog());
+        addButton.setOnClickListener(v -> showAddMedicineDialog());
         addButton.setLayoutParams(new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT));
@@ -978,12 +882,12 @@ public class ResultActivity extends AppCompatActivity {
         btnConfirm.setEnabled(!extractedMedicines.isEmpty());
     }
 
-    private void showEditDialog(final int index) {
+    private void showEditDialog(final String medicine) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("약품명 수정");
 
         final AutoCompleteTextView input = new AutoCompleteTextView(this);
-        input.setText(extractedMedicines.get(index));
+        input.setText(medicine);
         input.setSelection(input.getText().length());
         input.setHint("약품명을 입력하세요");
 
@@ -993,92 +897,13 @@ public class ResultActivity extends AppCompatActivity {
         builder.setView(input);
 
         // 데이터베이스의 약품명을 어댑터로 생성
-        input.setAdapter(this.adapter);
+        input.setAdapter(adapter);
         input.setThreshold(1);
-
-        // 텍스트 변경 리스너 추가
-//        input.addTextChangedListener(new TextWatcher() {
-//            @Override
-//            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-//
-//            @Override
-//            public void onTextChanged(CharSequence s, int start, int before, int count) {
-//                String query = s.toString().toLowerCase();
-//                List<String> matches = new ArrayList<>();
-//                for (String name : medicineNames) {
-//                    if (name.toLowerCase().contains(query)) {
-//                        matches.add(name);
-//                    }
-//                }
-//                adapter.clear();
-//                adapter.addAll(matches);
-//                adapter.notifyDataSetChanged();
-//            }
-//
-//            @Override
-//            public void afterTextChanged(Editable s) {}
-//        });
-
 
         builder.setPositiveButton("저장", (dialog, which) -> {
             String newName = input.getText().toString().trim();
             if (!newName.isEmpty()) {
-                extractedMedicines.set(index, newName);
-                displayResults();
-            }
-        });
-
-        builder.setNegativeButton("취소", (dialog, which) -> dialog.cancel());
-
-        AlertDialog dialog = builder.create();
-
-        dialog.setOnShowListener(dialogInterface -> {
-            input.requestFocus();
-            InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-            imm.showSoftInput(input, InputMethodManager.SHOW_IMPLICIT);
-        });
-
-        dialog.show();
-    }
-
-    private void showAddDialog() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("약품 추가");
-
-        final AutoCompleteTextView input = new AutoCompleteTextView(this);
-        input.setHint("약품명을 입력하세요");
-        builder.setView(input);
-
-        // 어댑터 부착
-        input.setAdapter(this.adapter);
-        input.setThreshold(1);
-
-        // 텍스트 변경 리스너 추가
-//        input.addTextChangedListener(new TextWatcher() {
-//            @Override
-//            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-//
-//            @Override
-//            public void onTextChanged(CharSequence s, int start, int before, int count) {
-//                String query = s.toString().toLowerCase();
-//                List<String> matches = new ArrayList<>();
-//                for (String name : medicineNames) {
-//                    if (name.toLowerCase().contains(query)) {
-//                        matches.add(name);
-//                    }
-//                }
-//                adapter.clear();
-//                adapter.addAll(matches);
-//                adapter.notifyDataSetChanged();
-//            }
-//
-//            @Override
-//            public void afterTextChanged(Editable s) {}
-//        });
-
-        builder.setPositiveButton("추가", (dialog, which) -> {
-            String newName = input.getText().toString().trim();
-            if (!newName.isEmpty() && !extractedMedicines.contains(newName)) {
+                extractedMedicines.remove(medicine);
                 extractedMedicines.add(newName);
                 displayResults();
             }
@@ -1096,6 +921,46 @@ public class ResultActivity extends AppCompatActivity {
 
         dialog.show();
     }
+
+    private void showAddMedicineDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("약품 추가");
+
+        // 입력 필드 생성
+        final AutoCompleteTextView input = new AutoCompleteTextView(this);
+        input.setAdapter(adapter);
+        input.setThreshold(1);
+        input.setLayoutParams(new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT));
+        input.setPadding(50, 30, 50, 30);
+
+        LinearLayout layout = new LinearLayout(this);
+        layout.setOrientation(LinearLayout.VERTICAL);
+        layout.addView(input);
+        builder.setView(layout);
+
+        builder.setPositiveButton("추가", (dialog, which) -> {
+            String newName = input.getText().toString().trim();
+            if (!newName.isEmpty()) {
+                extractedMedicines.add(newName); // Set은 자동으로 중복 제거
+                displayResults();
+            }
+        });
+
+        builder.setNegativeButton("취소", (dialog, which) -> dialog.cancel());
+
+        AlertDialog dialog = builder.create();
+
+        dialog.setOnShowListener(dialogInterface -> {
+            input.requestFocus();
+            InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+            imm.showSoftInput(input, InputMethodManager.SHOW_IMPLICIT);
+        });
+
+        dialog.show();
+    }
+
     @Override
     public void onBackPressed() {
         // 메인 액티비티로 돌아가기. OCR로 돌아가면 카메라 초기화가 제대로 이루어지지 않고 데이터베이스 접근도 실패하는 오류 발생함.

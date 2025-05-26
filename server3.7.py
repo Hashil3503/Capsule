@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig
+import difflib
 import torch
 import re
 import os
@@ -24,7 +25,7 @@ model = AutoModelForCausalLM.from_pretrained(
 )
 model.eval()
 
-FIELDS = ["성분", "효능", "제형", "주의사항"]
+FIELDS = ["성분", "효과", "제형", "주의사항"]
 
 with open(r'C:\Users\kimmh\AndroidStudioProjects\Capsule 2.2\app\src\main\assets\medicine_info\약품 정보.txt', 'r', encoding='utf-8') as f:
     raw_drug_data = f.read().split('\n\n\n')
@@ -78,16 +79,25 @@ def clean_special_characters(text: str) -> str:
     text = re.sub(r'[\.\!\?\~]{3,}', '...', text)
     return text.strip()
 
-def remove_irrelevant_sentences(response: str, context: str) -> str:
-    context_words = set(re.findall(r'\w+', context))
-    sentences = re.split(r'(?<=[.!?])\s+', response)
-    filtered = []
-    for sentence in sentences:
-        words_in_sentence = set(re.findall(r'\w+', sentence))
-        # 문장에 context에 없는 단어만 포함되면 제거
-        if words_in_sentence & context_words or len(words_in_sentence) == 0:
-            filtered.append(sentence)
-    return ' '.join(filtered).strip()
+def correct_korean_ingredient_names(response: str, context: str) -> str: #모델이 한글 성분명을 자꾸 오타내서 추가한 함수
+    # Context에서 한글 성분명 추출 (-으로 시작해서 ) 또는 \n 또는 문자열 끝)
+    korean_ingredients = re.findall(r'-([가-힣]+)(?:\(|\n|$)', context)
+
+    # 응답에서 한글 단어 추출 (2글자 이상 단어만 교정 대상으로)
+    korean_words = re.findall(r'\b[가-힣]{2,}\b', response)
+
+    for word in korean_words:
+        best_match = None
+        best_ratio = 0
+        for ingredient in korean_ingredients:
+            ratio = difflib.SequenceMatcher(None, word, ingredient).ratio()
+            if ratio > best_ratio:
+                best_ratio = ratio
+                best_match = ingredient
+        # 80% 이상 유사할 때만 교정
+        if best_ratio >= 0.7 and best_match and word != best_match:
+            response = re.sub(rf'\b{word}\b', best_match, response)
+    return response
 
 
 def generate_response(prompt: str, max_new_tokens: int = 160, temperature: float = 0.3, top_p: float = 0.9) -> str:
@@ -109,8 +119,9 @@ def generate_response(prompt: str, max_new_tokens: int = 160, temperature: float
         f"Instruction:\n{prompt.strip()}\n\n"
         "반드시 위 Context에 포함된 정보로만 답변하되, 주제를 벗어나지 않는 요약은 허용합니다. 단, Context에 없는 정보는 절대 추가하지 마십시오.\n"
         "Context의 단어와 문장은 절대 변경하지 말고 그대로 사용하십시오. 새로운 문장이나 요약된 표현을 만들지 마십시오. 예: '기침 중추에 작용하여 기침 반사를 억제'는 반드시 그대로 사용하십시오. \n"
+        "영문 성분명은 반드시 Context에 있는 철자를 그대로 복사하여 사용하십시오. 철자를 변경하거나 유사하게 작성하지 마십시오.\n"
         "특수 문자를 사용하지 마세요.\n"
-        "정보의 시점, 작성자 정보 등을 명시하지 마시오. \n"
+        "정보의 시점, 작성자 정보 등을 절대 명시하지 마시오. \n"
         "더 쓸 내용이 없으면 억지로 내용을 채우지 마시오.\n"
         "반드시 한글로만 간결하게 답변하시오.\n\n"
         f"질문: {prompt.strip()}\n"
@@ -121,7 +132,7 @@ def generate_response(prompt: str, max_new_tokens: int = 160, temperature: float
     outputs = model.generate(
         **inputs,
         max_new_tokens=max_new_tokens,
-        do_sample=False,
+        do_sample=True,
         temperature=temperature,
         top_p=top_p,
         pad_token_id=tokenizer.eos_token_id,
@@ -161,6 +172,14 @@ def generate_response(prompt: str, max_new_tokens: int = 160, temperature: float
 
     # 특수문자 반복 제거
     cleaned_response = clean_special_characters(cleaned_response)
+    
+    # -END OF ANSWER- 이후 내용 제거. 이상하게 시킨적도 없는데 자꾸 이 문구로 응답을 끝맺어서 추가함.
+    end_marker = "-END OF ANSWER-"
+    if end_marker in cleaned_response:
+        cleaned_response = cleaned_response.split(end_marker)[0].strip()
+
+    # 한글 성분명 오타 교정
+    cleaned_response = correct_korean_ingredient_names(cleaned_response, context)
 
     return cleaned_response
 

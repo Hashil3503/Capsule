@@ -2,7 +2,6 @@ package com.example.myapplication;
 
 import android.app.DatePickerDialog;
 import android.content.Intent;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -24,23 +23,12 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
-import org.w3c.dom.Text;
-
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
 
 public class AddPrescriptionActivity extends AppCompatActivity {
 
@@ -102,7 +90,7 @@ public class AddPrescriptionActivity extends AppCompatActivity {
         if (ocrMedicineNames  != null && !ocrMedicineNames .isEmpty()) {
             for (String medicineName : ocrMedicineNames ) {
 
-                String norName = normalizeMedicineName(medicineName); //DB 조회를 위한 의약품 이름 정규화
+                String norName = CommonMethod.normalizeWord(medicineName); //DB 조회를 위한 의약품 이름 정규화
 
                 new Thread(() -> {
                     MedicineTable medicineTable = medicineTableRepository.getMedicationByName(norName);
@@ -130,7 +118,7 @@ public class AddPrescriptionActivity extends AppCompatActivity {
                             public void afterTextChanged(Editable s) {
                                 // 입력 완료 후 상태
                                 String inputName = s.toString().trim();
-                                String normalized = normalizeMedicineName(inputName);
+                                String normalized = CommonMethod.normalizeWord(inputName);
 
                                 new Thread(() -> {
                                     MedicineTable updatedMedicine = medicineTableRepository.getMedicationByName(normalized);
@@ -214,7 +202,7 @@ public class AddPrescriptionActivity extends AppCompatActivity {
                     public void afterTextChanged(Editable s) {
                         // 입력 완료 후 상태
                         String inputName = s.toString().trim();
-                        String normalized = normalizeMedicineName(inputName);
+                        String normalized = CommonMethod.normalizeWord(inputName);
 
                         new Thread(() -> {
                             MedicineTable updatedMedicine = medicineTableRepository.getMedicationByName(normalized);

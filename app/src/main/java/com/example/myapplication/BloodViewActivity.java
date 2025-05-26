@@ -78,10 +78,13 @@ public class BloodViewActivity extends AppCompatActivity {
         }
     }
 
-    private boolean isBloodPressureNormal(int systolic, int diastolic) {
-        return systolic >= 90 && systolic < 120 && diastolic >= 60 && diastolic < 80;
+    private boolean isSystolicNormal(int systolic) {
+        return systolic >= 90 && systolic < 120;
     }
 
+    private boolean isDiastolicNormal(int diastolic) {
+        return diastolic >= 60 && diastolic < 80;
+    }
 
     private void reload() {
         LinearLayout bloodContainer = findViewById(R.id.bloodContainer);
@@ -208,15 +211,17 @@ public class BloodViewActivity extends AppCompatActivity {
 
                     sugarDateTextView.setText(sdf.format(bloodPressure.getDate()));
 
-                    boolean isNormal = isBloodPressureNormal(bloodPressure.getSystolic(), bloodPressure.getDiastolic());
+                    boolean isNormal1 = isSystolicNormal(bloodPressure.getSystolic());
+                    boolean isNormal2 = isDiastolicNormal(bloodPressure.getDiastolic());
                     runOnUiThread(() -> {
                         systolicTextView.setText("수축기: " + bloodPressure.getSystolic());
                         diastolicTextView.setText("이완기: " + bloodPressure.getDiastolic());
 
                         int normalColor = ContextCompat.getColor(BloodViewActivity.this, R.color.textPrimary);
-                        int color = isNormal ? normalColor : Color.RED;
-                        systolicTextView.setTextColor(color);
-                        diastolicTextView.setTextColor(color);
+                        int color1 = isNormal1 ? normalColor : Color.RED;
+                        int color2 = isNormal2 ? normalColor : Color.RED;
+                        systolicTextView.setTextColor(color1);
+                        diastolicTextView.setTextColor(color2);
                     });
 
                     bloodFrames.add(pressureFrame); // 나중에 한 번에 UI 추가
@@ -252,15 +257,17 @@ public class BloodViewActivity extends AppCompatActivity {
                                                 bloodPressure.setDiastolic(CommonMethod.parseInteger(String.valueOf(diastolicEdit.getText())));
 
                                                 bloodPressureRepository.update(bloodPressure); // DB에 수정사항 반영
-                                                boolean isNormal = isBloodPressureNormal(bloodPressure.getSystolic(), bloodPressure.getDiastolic());
-                                                runOnUiThread(() -> { //UI에도 수정사항 반영 (이전에 UI작업이 일어나고 값이 수정되어도 UI가 실시간으로 수정되지 않기 때문에 직접 UI를 업데이트 해야함)
+                                                boolean isNormal1 = isSystolicNormal(bloodPressure.getSystolic());
+                                                boolean isNormal2 = isDiastolicNormal(bloodPressure.getDiastolic());
+                                                runOnUiThread(() -> {
                                                     systolicTextView.setText("수축기: " + bloodPressure.getSystolic());
                                                     diastolicTextView.setText("이완기: " + bloodPressure.getDiastolic());
+
                                                     int normalColor = ContextCompat.getColor(BloodViewActivity.this, R.color.textPrimary);
-                                                    int color = isNormal ? normalColor : Color.RED;
-                                                    systolicTextView.setTextColor(color);
-                                                    diastolicTextView.setTextColor(color);
-                                                    Toast.makeText(BloodViewActivity.this, "혈압 정보를 수정하였습니다!", Toast.LENGTH_SHORT).show();
+                                                    int color1 = isNormal1 ? normalColor : Color.RED;
+                                                    int color2 = isNormal2 ? normalColor : Color.RED;
+                                                    systolicTextView.setTextColor(color1);
+                                                    diastolicTextView.setTextColor(color2);
                                                 });
                                             }).start();
                                         })

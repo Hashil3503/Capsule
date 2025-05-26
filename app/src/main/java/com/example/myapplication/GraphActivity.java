@@ -17,14 +17,14 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 public class GraphActivity extends AppCompatActivity {
-    private final int Max_Empty_Sugar = 99;
+    private final int Max_Empty_Sugar = 100;
     private final int Min_Empty_Sugar = 70;
 
     private final int Max_noEmpty_Sugar = 140;
     private final int Min_noEmpty_Sugar = 70;
-    private final int Max_Systolic_Pressure = 139;
+    private final int Max_Systolic_Pressure = 120;
     private final int Min_Systolic_Pressure = 90;
-    private final int Max_Diastolic_Pressure = 89;
+    private final int Max_Diastolic_Pressure = 80;
     private final int Min_Diastolic_Pressure = 60;
 
     private BloodSugarRepository bloodSugarRepository;
@@ -192,8 +192,8 @@ public class GraphActivity extends AppCompatActivity {
         abnormalList.clear(); // 리스트 비우기
 
         for (BloodSugar s : sugars) {
-            boolean abnormal = s.getEmpty_stomach() && s.getValue() > Max_Empty_Sugar || s.getEmpty_stomach() && s.getValue() < Min_Empty_Sugar
-                    || !s.getEmpty_stomach() && s.getValue() > Max_noEmpty_Sugar || !s.getEmpty_stomach() && s.getValue() < Min_noEmpty_Sugar;
+            boolean abnormal = s.getEmpty_stomach() && s.getValue() >= Max_Empty_Sugar || s.getEmpty_stomach() && s.getValue() < Min_Empty_Sugar
+                    || !s.getEmpty_stomach() && s.getValue() >= Max_noEmpty_Sugar || !s.getEmpty_stomach() && s.getValue() < Min_noEmpty_Sugar;
             if (abnormal) {
                 abnormalFound = true;
                 String date = new SimpleDateFormat("d", Locale.KOREA).format(s.getDate());
@@ -217,7 +217,7 @@ public class GraphActivity extends AppCompatActivity {
         abnormalList.clear(); // 리스트 비우기
 
         for (BloodPressure p : pressures) {
-            boolean abnormal = p.getSystolic() > Max_Systolic_Pressure || p.getSystolic() < Min_Systolic_Pressure || p.getDiastolic() > Max_Diastolic_Pressure || p.getDiastolic() < Min_Diastolic_Pressure;
+            boolean abnormal = p.getSystolic() >= Max_Systolic_Pressure || p.getSystolic() < Min_Systolic_Pressure || p.getDiastolic() >= Max_Diastolic_Pressure || p.getDiastolic() < Min_Diastolic_Pressure;
             if (abnormal) {
                 abnormalFound = true;
                 String date = new SimpleDateFormat("d", Locale.KOREA).format(p.getDate());
@@ -398,9 +398,9 @@ public class GraphActivity extends AppCompatActivity {
         private boolean isAbnormal(String label, float value) { // 비정상이면 true, 정상이면 false 반환
             switch (label) {
                 case "공복":
-                    return value < 70 || value > 100;
+                    return value < 70 || value >= 100;
                 case "식후":
-                    return value < 70 || value > 140;
+                    return value < 70 || value >= 140;
                 case "수축":
                     return value < 90 || value >= 120;
                 case "이완":

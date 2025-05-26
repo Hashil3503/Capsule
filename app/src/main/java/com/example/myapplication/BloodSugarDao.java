@@ -18,13 +18,12 @@ public interface BloodSugarDao {
     @Delete
     void delete(BloodSugar bloodsugar);
 
-    @Query("SELECT * FROM bloodsugar")
+    @Query("SELECT * FROM bloodsugar ORDER BY date ASC")
     List<BloodSugar> getAllBloodSugars();
-
     @Query("SELECT * FROM bloodsugar WHERE id = :id")
     BloodSugar getBloodSugarById(long id);
 
     //선택한 YYYY-MM의 레코드 목록 조회
-    @Query("SELECT * FROM bloodsugar WHERE strftime('%Y-%m', date / 1000, 'unixepoch') = :yearMonth")
+    @Query("SELECT * FROM bloodsugar WHERE strftime('%Y-%m', date / 1000, 'unixepoch') = :yearMonth ORDER BY date ASC")
     List<BloodSugar> getByMonth(String yearMonth);
 }

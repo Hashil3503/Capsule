@@ -26,17 +26,10 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.google.android.material.materialswitch.MaterialSwitch;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 
 public class ViewDetailActivity extends AppCompatActivity {
 
@@ -117,7 +110,7 @@ public class ViewDetailActivity extends AppCompatActivity {
                 for (Prescription_View prescriptionView : prescriptionViews) {
                     long medicationId = prescriptionView.getMedication_id();
                     Medication medication = medicationRepository.getMedicationById(medicationId);
-                    String norName = normalizeMedicineName(medication.getName());
+                    String norName = CommonMethod.normalizeWord(medication.getName());
                     MedicineTable medicineTable = medicineTableRepository.getMedicationByName(norName); //원래 의약품 메모, 부작용, 부작용 여부를 여기서 조회하려고 했는데 그렇게 하면 DB에 없는 의약품 이름 사용시 크래시 뜸.
 
                     if (medication != null) {
@@ -251,7 +244,7 @@ public class ViewDetailActivity extends AppCompatActivity {
                                     }
 
                                     new Thread(() -> {
-                                        String n_name = normalizeMedicineName(name);
+                                        String n_name = CommonMethod.normalizeWord(name);
                                         MedicineTable toEdit = medicineTableRepository.getMedicationByName(n_name);
 
                                         medication.setName(name);

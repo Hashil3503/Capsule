@@ -238,9 +238,9 @@ public class MainActivity extends AppCompatActivity {
                     line = line.trim();
                     if (line.isEmpty()) continue;
 
-                    if (line.startsWith("@")) {
+                    if (line.startsWith("@")) { //의약품 정보 태그일 경우
                         currentSection = line.substring(1).trim();
-                    } else if (line.startsWith("#")) {
+                    } else if (line.startsWith("#")) { //의약품 이름일 경우
                         // 이전 약품 저장
                         if (currentMedicine != null) {
                             saveMedicineInfo(currentMedicine, ingredient.toString().trim(), effect.toString().trim(), form.toString().trim(), precaution.toString().trim());
