@@ -239,7 +239,7 @@ public class MainActivity extends AppCompatActivity {
                     if (line.isEmpty()) continue;
 
                     if (line.startsWith("@")) { //의약품 정보 태그일 경우
-                        currentSection = line.substring(1).trim();
+                        currentSection = line.substring(1).trim().replace(":", "");
                     } else if (line.startsWith("#")) { //의약품 이름일 경우
                         // 이전 약품 저장
                         if (currentMedicine != null) {
@@ -253,16 +253,16 @@ public class MainActivity extends AppCompatActivity {
                         currentSection = "";
                     } else {
                         switch (currentSection) {
-                            case "성분:":
+                            case "성분":
                                 ingredient.append(line).append("\n");
                                 break;
-                            case "효과:":
+                            case "효과":
                                 effect.append(line).append("\n");
                                 break;
-                            case "제형:":
+                            case "제형":
                                 form.append(line).append("\n");
                                 break;
-                            case "주의사항:":
+                            case "주의사항":
                                 precaution.append(line).append("\n");
                                 break;
                         }
