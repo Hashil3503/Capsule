@@ -256,7 +256,7 @@ public class MainActivity extends AppCompatActivity {
                             case "성분:":
                                 ingredient.append(line).append("\n");
                                 break;
-                            case "효능:":
+                            case "효과:":
                                 effect.append(line).append("\n");
                                 break;
                             case "제형:":
