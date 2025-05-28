@@ -1,4 +1,5 @@
 [ Capsule ]
+
 OCR과 데이터베이스를 활용하여 처방전을 사진 한장으로 간편하게 등록하고 관리할 수 있는 어플리케이션입니다.
 
 ![image](https://github.com/user-attachments/assets/3e14fd52-1469-4fef-95c2-12a2ac47b6d8)
@@ -12,13 +13,6 @@ OCR과 데이터베이스를 활용하여 처방전을 사진 한장으로 간�
 개발 기간 : 2024.09.02 ~ 2025.05.20
 
 개발 인원: 김명환, 손준영, 이동훈, 황석양
-
-
-server 3.7.py를 터미널에서 실행해 서버 시작.
-서버 실행전 pip install fastapi pydantic transformers torch uvicorn로 패키지 설치
-
-Llama2ApiClient.java 에서
-private static final String API_URL의 값을 서버를 실행하는 컴퓨터의 공인 IP주소 값으로 수정해야함.
 
 [수행 과정 ]
 - 프로젝트 목표 설정 및 기능 구조도와 UI 설계도 작성
@@ -49,3 +43,13 @@ OCR 기반의 편리한 처방전 등록으로 사용자 접근성 향상
 QnA 챗봇을 통한 빠른 의약품 정보 확인
 혈당/혈압 추이 그래프를 통한 건강 상태 모니터링 가능
 
+
+
+------LLM 서버 사용 시 주의사항-------
+
+
+server 3.7.py를 터미널에서 실행해 서버 시작.
+서버 실행전 pip install fastapi pydantic transformers torch uvicorn로 패키지 설치
+
+Llama2ApiClient.java 에서
+private static final String API_URL의 값을 서버를 실행하는 컴퓨터의 공인 IP주소 값으로 수정해야함.
