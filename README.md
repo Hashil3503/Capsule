@@ -1,3 +1,6 @@
+[h1] dfsdf s[/h1]
+
+
 server 3.7.py를 터미널에서 실행해 서버 시작.
 서버 실행전 pip install fastapi pydantic transformers torch uvicorn로 패키지 설치
 
