@@ -30,7 +30,9 @@ private static final String API_URL의 값을 서버를 실행하는 컴퓨터�
 - 반복적인 테스트를 통한 버그 수정
 
 [상세 내용]
+
 ![image](https://github.com/user-attachments/assets/20f02c38-d094-4a61-9af1-ae7f59ea17fd)
+
 주요 기능 구현
 - OCR 기술을 활용한 처방전 인식 및 약품명 추출
 - 의약품 정보 조회 및 복약 알람 기능
@@ -38,7 +40,9 @@ private static final String API_URL의 값을 서버를 실행하는 컴퓨터�
 - QnA 챗봇을 통한 의약품 관련 간단한 질의응답
 
 [결과 및 기대 효과]
+
 ![image](https://github.com/user-attachments/assets/73a12870-3f60-487e-861b-0ff219acd5b2)
+
 
 OCR 기반의 편리한 처방전 등록으로 사용자 접근성 향상
 복약 관리와 건강 데이터 관리 기능으로 사용자 건강 관리 능력 향상
