@@ -27,7 +27,7 @@ model.eval()
 
 FIELDS = ["성분", "효과", "제형", "주의사항"]
 
-with open(r'C:\Users\kimmh\AndroidStudioProjects\Capsule 2.2\app\src\main\assets\medicine_info\약품 정보.txt', 'r', encoding='utf-8') as f:
+with open(r'C:\Users\kimmh\AndroidStudioProjects\Capsule 2.4\app\src\main\assets\medicine_info\약품 정보.txt', 'r', encoding='utf-8') as f:
     raw_drug_data = f.read().split('\n\n\n')
 
 drug_info_dict = {}
@@ -117,10 +117,11 @@ def generate_response(prompt: str, max_new_tokens: int = 160, temperature: float
     formatted_prompt = (
         f"Context:\n{context}\n\n"
         f"Instruction:\n{prompt.strip()}\n\n"
-        "반드시 위 Context에 포함된 정보로만 답변하되, 주제를 벗어나지 않는 요약은 허용합니다. 단, Context에 없는 정보는 절대 추가하지 마십시오.\n"
-        "Context의 단어와 문장은 절대 변경하지 말고 그대로 사용하십시오. 새로운 문장이나 요약된 표현을 만들지 마십시오. 예: '기침 중추에 작용하여 기침 반사를 억제'는 반드시 그대로 사용하십시오. \n"
-        "영문 성분명은 반드시 Context에 있는 철자를 그대로 복사하여 사용하십시오. 철자를 변경하거나 유사하게 작성하지 마십시오.\n"
+        "질문에 대하여 위 Context에 포함된 정보를 자연스러운 문장으로 요약하여 전달하십시오. Context에 없는 정보는 절대 추가하지 마십시오.\n"
+        "Context의 단어와 문장은 절대 변경하지 말고 그대로 사용하십시오. 새로운 문장이나 표현을 만들지 마십시오. 예: '기침 중추에 작용하여 기침 반사를 억제'는 반드시 그대로 사용하십시오. \n"
+        "약품 이름과 성분명은 반드시 Context의 내용을 그대로 사용하십시오. 철자를 변경하거나 유사하게 작성하지 마십시오.\n"
         "특수 문자를 사용하지 마세요.\n"
+        "답변 자체의 내용과 관련 없는 부가적인 설명은 하지마시오\n"
         "정보의 시점, 작성자 정보 등을 절대 명시하지 마시오. \n"
         "더 쓸 내용이 없으면 억지로 내용을 채우지 마시오.\n"
         "반드시 한글로만 간결하게 답변하시오.\n\n"
