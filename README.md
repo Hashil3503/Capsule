@@ -48,11 +48,17 @@ QnA 챗봇을 통한 빠른 의약품 정보 확인
 [개발 환경]
 
 개발 도구 : Android Studio
+
 언어 : JAVA, Python
+
 DBMS : SQLite
+
 라이브러리 : Room, Caemera X, OKHttp, OpenCSV
+
 API : ML Kit, Fast API
+
 LLM : MLP-KTLim/llama-3-Korean-Bllossom-8B
+
 (https://huggingface.co/MLP-KTLim/llama-3-Korean-Bllossom-8B)
 
 [기능 설명]
