@@ -309,7 +309,7 @@ public class MainActivity extends AppCompatActivity {
 
         medicineTableRepository.insert(medicine);
         infocount++;
-        Log.d(TAG, "약품 정보 저장 완료: " + medicineName + "총 " + infocount + "개");
+        Log.d(TAG, "약품 정보 저장 완료: " + medicineName + " 총 " + infocount + "개");
 //        Log.d(TAG, "=== 저장된 약품 정보 ===");
 //        Log.d(TAG, "이름: " + medicineName);
 //        Log.d(TAG, "성분: " + ingredient);
