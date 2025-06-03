@@ -26,7 +26,8 @@ public class CommonMethod { //자주 쓰일 것 같은 메서드 모아둠
         // 2. 숫자+밀리그람/mg 단위 제거
         text = text.replaceAll("\\d+\\s*(밀리그람|밀리그램|mg|MG)", "").trim();
 
-        // 3. 괄호 시작 이후 문자열 모두 제거
+        // 3. 괄호로 시작해 괄호로 끝나는 문자열 제거 후, 괄호가 열린채로 끊긴 문자열 제거.
+        text = text.replaceAll("\\([^\\)]*\\)", "").trim();
         text = text.replaceAll("[\\(].*$", "").trim();
 
         // 4. 제형 키워드 중 가장 먼저 등장하는 위치 찾기
@@ -49,6 +50,8 @@ public class CommonMethod { //자주 쓰일 것 같은 메서드 모아둠
         } else {
             text = text.trim();
         }
+
+        if (text.length() < 2) return "";
 
         return text;
     }

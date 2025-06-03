@@ -763,53 +763,6 @@ public class ResultActivity extends AppCompatActivity {
         return dp[s1.length()][s2.length()];
     }
 
-    private String normalizeString(String text) {
-        if (text == null) return "";
-
-        // 1. 기본 정규화: 앞뒤 공백 제거
-        text = text.trim();
-        text = text.trim();
-
-        // 2. 괄호와 그 내용 제거
-        text = text.replaceAll("\\(.*?\\)", "").trim();
-
-        // 3. 언더스코어(_)와 그 이후 내용 제거
-        text = text.replaceAll("_.*$", "").trim();
-
-        // 4. 추가 공백 제거
-        text = text.replaceAll("\\s+", " ").trim();
-
-        // 5. 숫자 이후의 문자열 모두 제거
-        text = text.replaceAll("\\d.*$", "").trim();
-
-        // 6. 특수문자 제거 (한글, 영문만 남김)
-        text = text.replaceAll("[^가-힣a-zA-Z]", "").trim();
-
-        // 7. 마지막 언더스코어 제거
-        text = text.replaceAll("_$", "").trim();
-
-        return text;
-    }
-
-    private String normalizeMedicineName(String name) {
-        if (name == null) return "";
-
-        // 1. 앞뒤 공백 제거
-        name = name.trim();
-
-        // 2. 괄호, 언더스코어, 특수문자, 숫자 이후 모든 문자 제거
-        //    - 괄호 포함: (부터 이후 제거
-        //    - 언더스코어 포함: _ 이후 제거
-        //    - 숫자 포함: 숫자 이후 제거
-        name = name.replaceAll("[\\(\\_\\d].*$", "").trim();
-
-        // 3. 특수문자 제거 (한글, 영문만 남김)
-        name = name.replaceAll("[^가-힣a-zA-Z]", "").trim();
-
-        Log.d(TAG, "정규화된 약품명: " + name);
-        return name;
-    }
-
     private void displayResults() {
         LinearLayout resultLayout = findViewById(R.id.resultLayout);
         resultLayout.removeAllViews();

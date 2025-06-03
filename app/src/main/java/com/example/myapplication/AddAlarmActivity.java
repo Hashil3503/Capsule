@@ -124,8 +124,13 @@ public class AddAlarmActivity extends AppCompatActivity {
             }
         }).start();
 
-        btnStartDate.setOnClickListener(v -> showDatePicker(startDate, btnStartDate, "시작 날짜: "));
-        btnEndDate.setOnClickListener(v -> showDatePicker(endDate, btnEndDate, "종료 날짜: "));
+        btnStartDate.setOnClickListener(v ->
+                showDatePicker(startDate, btnStartDate, "시작 날짜: ", selected -> startDate = selected)
+        );
+
+        btnEndDate.setOnClickListener(v ->
+                showDatePicker(endDate, btnEndDate, "종료 날짜: ", selected -> endDate = selected)
+        );
 
         btnTime.setOnClickListener(v -> {
             if (alarmTimes.size() >= 5) {
@@ -154,16 +159,34 @@ public class AddAlarmActivity extends AppCompatActivity {
         });
 
         btnSetAlarm.setOnClickListener(v -> {
+
+            endDate.set(Calendar.HOUR_OF_DAY, 23);
+            endDate.set(Calendar.MINUTE, 59);
+            endDate.set(Calendar.SECOND, 59);
+            endDate.set(Calendar.MILLISECOND, 999);
+
+
+            Log.d("AlarmDebug", "startDate: " + startDate.getTime());
+            Log.d("AlarmDebug", "endDate: " + endDate.getTime());
+
             if (alarmTimes.isEmpty()) {
                 Toast.makeText(this, "알람 시간을 1개 이상 설정해주세요.", Toast.LENGTH_SHORT).show();
                 return;
             }
 
-
             new Thread(() -> {
                 Calendar tempDate = (Calendar) startDate.clone();
+                tempDate.set(Calendar.HOUR_OF_DAY, 0);
+                tempDate.set(Calendar.MINUTE, 0);
+                tempDate.set(Calendar.SECOND, 0);
+                tempDate.set(Calendar.MILLISECOND, 0);
+
                 int count = 0;
                 while (!tempDate.after(endDate)) {
+
+                    Log.d("AlarmDebug", "tempDate: " + tempDate.getTime());
+                    Log.d("AlarmDebug", "alarmTimes size: " + alarmTimes.size());
+
                     for (Calendar time : alarmTimes) {
                         Calendar alarmDateTime = (Calendar) tempDate.clone();
                         alarmDateTime.set(Calendar.HOUR_OF_DAY, time.get(Calendar.HOUR_OF_DAY));
@@ -171,12 +194,21 @@ public class AddAlarmActivity extends AppCompatActivity {
                         alarmDateTime.set(Calendar.SECOND, 0);
                         alarmDateTime.set(Calendar.MILLISECOND, 0);
 
-                        if (alarmDateTime.before(Calendar.getInstance())) {
-                            Log.d("AddAlarmActivity", "알람 시간이 과거 입니다." + alarmDateTime.getTime());
+                        Log.d("AlarmDebug", "계산된 알람 시간: " + alarmDateTime.getTime());
+                        Log.d("AlarmDebug", "지금 시간: " + System.currentTimeMillis());
+
+
+                        if (alarmDateTime.getTimeInMillis() <= System.currentTimeMillis()) {
+                            Log.d("AlarmDebug", "과거 시간이므로 알람 스킵: " + alarmDateTime.getTime());
                             continue;
                         }
+
                         setAlarm(alarmDateTime);
                         count++;
+
+                        Log.d("AlarmDebug", "알람 대상 날짜: " + alarmDateTime.getTime());
+                        Log.d("AlarmDebug", "현재 시간: " + Calendar.getInstance().getTime());
+
                     }
                     tempDate.add(Calendar.DATE, 1);
                 }
@@ -186,33 +218,8 @@ public class AddAlarmActivity extends AppCompatActivity {
                     alarmTimes.clear();
                     updateAlarmTimeDisplay();
 
-                    // ✅ 알람 설정 후 UI 초기화
-                    startDate = Calendar.getInstance();
-                    endDate = Calendar.getInstance();
-                    alarmTimes.clear();
-
-
                 });
 
-            }).start();
-
-            new Thread(() -> {
-                Prescription prescription = prescriptionRepository.getPrescriptionById(pid);
-                if (prescription != null) {
-                    Date date = prescription.getDate();
-                    int duration = prescription.getDuration();
-
-                    runOnUiThread(() -> {
-
-                        startDate.setTime(date);
-                        endDate.setTime(date); //setTime()은 Date 타입을 Calendar 타입으로 변환할 때 사용하는 메서드.
-                        endDate.add(Calendar.DATE, duration - 1); // 날짜 + 복용일수 - 1 = 마지막 복용일
-
-                        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.KOREAN);
-                        btnStartDate.setText("시작 날짜: " + sdf.format(date));
-                        btnEndDate.setText("종료 날짜: " + sdf.format(endDate.getTime()));
-                    });
-                }
             }).start();
         });
 
@@ -266,8 +273,6 @@ public class AddAlarmActivity extends AppCompatActivity {
                     .show();
         });
 
-
-
         loadAlarms(); // 이 메서드로 기존 알람 목록을 불러옴. (선언은 버튼 리스너 보다 늦게 선언했지만, 실제로 호출은 이 메서드가 먼저 호출되기 때문에 작동에 문제는 없음)
         updateAlarmTimeDisplay();
     }
@@ -297,6 +302,8 @@ public class AddAlarmActivity extends AppCompatActivity {
                 intent,
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
         );
+
+        //Log.d("Alarm", "setAlarm: " + calendar.getTime() + ", requestCode=" + requestCode);
 
         AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
         if (alarmManager != null) {
@@ -332,19 +339,27 @@ public class AddAlarmActivity extends AppCompatActivity {
         }
     }
 
-    private void showDatePicker(Calendar target, Button button, String prefix) {
-        int year = target.get(Calendar.YEAR);
-        int month = target.get(Calendar.MONTH);
-        int day = target.get(Calendar.DAY_OF_MONTH);
+    public interface DatePickerCallback {
+        void onDateSet(Calendar selectedDate);
+    }
+    private void showDatePicker(Calendar initialDate, Button button, String label, DatePickerCallback callback) {
+        int year = initialDate.get(Calendar.YEAR);
+        int month = initialDate.get(Calendar.MONTH);
+        int day = initialDate.get(Calendar.DAY_OF_MONTH);
 
         DatePickerDialog dialog = new DatePickerDialog(this, (view, y, m, d) -> {
-            target.set(y, m, d);
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.KOREAN);
-            button.setText(prefix + sdf.format(target.getTime()));
+            Calendar selected = Calendar.getInstance();
+            selected.set(y, m, d);
+
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+            button.setText(label + sdf.format(selected.getTime()));
+            callback.onDateSet(selected);
         }, year, month, day);
 
         dialog.show();
     }
+
+
 
     private void updateAlarmTimeDisplay() {
         StringBuilder builder = new StringBuilder("추가된 알람 시간:\n");
