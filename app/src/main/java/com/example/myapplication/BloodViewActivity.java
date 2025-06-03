@@ -72,7 +72,7 @@ public class BloodViewActivity extends AppCompatActivity {
 
     private boolean isBloodSugarNormal(float value, boolean emptyStomach) {
         if (emptyStomach) {
-            return value >= 70 && value <= 100;
+            return value >= 70 && value < 100;
         } else {
             return value >= 70 && value < 140;
         }
