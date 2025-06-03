@@ -41,4 +41,8 @@ public class MedicineTableRepository {
         executorService.execute(() -> medicineTableDao.deleteMedicationByName(medicinename));
     }
 
+    public void deleteAllMedicineTables(){
+        medicineTableDao.deleteAll();
+    }
+
 }

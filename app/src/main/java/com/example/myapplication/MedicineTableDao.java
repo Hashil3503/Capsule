@@ -27,4 +27,6 @@ public interface MedicineTableDao {
     @Query("DELETE FROM medicinetable WHERE name = :medicinename")
     void deleteMedicationByName(String medicinename);
 
+    @Query("DELETE FROM MedicineTable")
+    void deleteAll();
 }

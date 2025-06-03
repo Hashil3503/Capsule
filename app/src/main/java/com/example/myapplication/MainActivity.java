@@ -216,6 +216,14 @@ public class MainActivity extends AppCompatActivity {
                     return; // 데이터가 존재하면 초기화 안 함
                 }
 
+//                if (existingData != null && !existingData.isEmpty()) {
+//                    medicineTableRepository.deleteAllMedicineTables();
+//                    Log.i(TAG, "약품 데이터 삭제");
+//
+//                }
+                //데이터베이스 업데이트에만 사용
+
+
                 String fileName = "medicine_info/약품 정보.txt";
                 InputStream inputStream = getAssets().open(fileName);
 
